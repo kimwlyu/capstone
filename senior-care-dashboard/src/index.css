@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { @apply bg-slate-50 text-slate-900 font-body; }
+
+/* 카드 프리셋 */
+.card { @apply rounded-xl border border-slate-200 bg-white shadow-soft; }
+
+/* 포커스 링 */
+.focus-ring { @apply focus:outline-none focus:ring-2 focus:ring-brand-200 focus:ring-offset-1 focus:ring-offset-white; }
+
+/* 스크롤바 */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 9999px; }
