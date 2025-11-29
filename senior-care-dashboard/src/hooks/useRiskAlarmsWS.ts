@@ -1,11 +1,8 @@
 // src/hooks/useRiskAlarmsWS.ts
 import { useEffect, useState } from "react";
-import {
-    RealtimeAlarm,
-    getCombinedRiskLevel,
-    getWebSocketUrl,
-} from "@/api/client";
+import { getWebSocketUrl, type RealtimeAlarm } from "@/api/client";
 
+// WebSocket 으로 최신 위험 알림 한 건만 받아오는 훅
 export function useRiskAlarmsWS() {
     const [latestAlarm, setLatestAlarm] = useState<RealtimeAlarm | null>(null);
 
@@ -15,11 +12,12 @@ export function useRiskAlarmsWS() {
 
         ws.onmessage = (event) => {
             try {
-                const data = JSON.parse(event.data) as RealtimeAlarm;
-                const level = getCombinedRiskLevel(
-                    data.mentalLevel,
-                    data.physicalLevel
-                );
+                const data: RealtimeAlarm = JSON.parse(event.data);
+
+                // 정신/신체 중 더 높은 등급
+                const level = Math.max(data.mentalLevel, data.physicalLevel);
+
+                // 최고 등급(3)일 때만 팝업용으로 저장
                 if (level === 3) {
                     setLatestAlarm(data);
                 }
