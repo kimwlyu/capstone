@@ -1,11 +1,16 @@
 // src/api/client.ts
 import axios from "axios";
 
+// ================== 기본 URL 설정 ==================
+
+// .env에 VITE_API_BASE가 있으면 그걸 쓰고, 없으면 api.carerobot.shop 사용
 const API_BASE_URL = (
-    import.meta.env.VITE_API_BASE ??
-    import.meta.env.VITE_API_BASE_URL ??
-    "https://api.carerobot.shop"
+    import.meta.env.VITE_API_BASE || "https://api.carerobot.shop"
 ).replace(/\/$/, "");
+
+// WebSocket용 기본 URL (옵션)
+const WS_BASE = (import.meta.env.VITE_WS_BASE || "").replace(/\/$/, "");
+const WS_DISABLED = import.meta.env.VITE_WS_DISABLED === "true";
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
@@ -16,11 +21,9 @@ api.interceptors.request.use((config) => {
     const token = localStorage.getItem("adminToken");
 
     if (token) {
-        // headers가 없으면 any로 캐스팅해서 빈 객체로 초기화
         if (!config.headers) {
             config.headers = {} as any;
         }
-
         (config.headers as any).Authorization = `Bearer ${token}`;
     }
 
@@ -121,8 +124,8 @@ export interface RealtimeAlarm {
 
 // Swagger 예시와 동일하게: 밀리초 제거한 ISO ("2025-10-03T10:23:00Z")
 function formatTimestampNoMs(): string {
-    const iso = new Date().toISOString(); // 2025-11-30T04:15:19.004Z
-    return iso.split(".")[0] + "Z";       // 2025-11-30T04:15:19Z
+    const iso = new Date().toISOString();
+    return iso.split(".")[0] + "Z";
 }
 
 export function formatDate(value?: string | null): string {
@@ -138,16 +141,28 @@ export function formatDate(value?: string | null): string {
     )}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+// WebSocket URL 생성
 export function getWebSocketUrl(path: string): string {
+    // 아예 끄는 옵션
+    if (WS_DISABLED) return "";
+
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+    // .env에 VITE_WS_BASE가 있으면 그걸 우선 사용
+    if (WS_BASE) {
+        return `${WS_BASE}${normalizedPath}`;
+    }
+
+    // 없으면 API_BASE_URL 기준으로 ws/wss로 변환
     try {
         const url = new URL(API_BASE_URL);
         url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-        url.pathname = path;
+        url.pathname = normalizedPath;
         url.search = "";
         url.hash = "";
         return url.toString();
     } catch {
-        return path;
+        return normalizedPath;
     }
 }
 
