@@ -25,13 +25,13 @@ const NotificationPanel = ({ onClose }: Props) => {
     }, []);
 
     return (
-        <div className="absolute right-8 top-16 z-40 w-96 rounded-2xl border border-slate-200 bg-white shadow-lg">
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                <h2 className="text-sm font-semibold text-slate-900">
+        <div className="absolute right-8 top-16 z-40 w-96 rounded-2xl border border-slate-700/60 bg-slate-900/95 shadow-[0_20px_60px_rgba(15,23,42,0.9)] animate-[panelFade_0.22s_ease-out]">
+            <div className="flex items-center justify-between border-b border-slate-700/70 px-4 py-3">
+                <h2 className="text-sm font-semibold text-slate-50">
                     최고 위험도 알림
                 </h2>
                 <button
-                    className="text-xs text-slate-500 hover:text-slate-700"
+                    className="text-xs text-slate-400 hover:text-slate-100"
                     onClick={onClose}
                 >
                     닫기
@@ -39,7 +39,7 @@ const NotificationPanel = ({ onClose }: Props) => {
             </div>
             <div className="max-h-96 overflow-y-auto p-2">
                 {alarms.length === 0 && (
-                    <div className="px-3 py-4 text-xs text-slate-500">
+                    <div className="px-3 py-4 text-xs text-slate-400">
                         아직 알림이 없습니다.
                     </div>
                 )}
@@ -49,28 +49,35 @@ const NotificationPanel = ({ onClose }: Props) => {
                     return (
                         <button
                             key={alarm.alarmId}
-                            className="flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-left hover:bg-slate-50"
+                            className="flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-left transition hover:bg-slate-800/80"
                             onClick={() => {
                                 navigate(`/risk-alarms/${alarm.alarmId}`);
                                 onClose();
                             }}
                         >
-                            <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-900">
+                            <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-slate-50">
                   {alarm.userName}
                 </span>
                                 <LevelBadge level={level} />
                             </div>
-                            <div className="text-xs text-slate-500">
+                            <div className="text-[11px] text-slate-400">
                                 {formatDate(alarm.createdAt)}
                             </div>
-                            <div className="line-clamp-2 text-xs text-slate-700">
+                            <div className="line-clamp-2 text-xs text-slate-200">
                                 {alarm.reasonText}
                             </div>
                         </button>
                     );
                 })}
             </div>
+
+            <style>{`
+        @keyframes panelFade {
+          0% { opacity: 0; transform: translateY(-6px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
         </div>
     );
 };

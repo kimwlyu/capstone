@@ -8,8 +8,9 @@ import {
     type UserDetailsResponse,
     type UserUtterance,
 } from "@/api/client";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { LevelBadge } from "@/components/LevelBadge";
+import { ArrowLeft } from "lucide-react";
 
 // Recharts
 import {
@@ -40,9 +41,10 @@ const RiskTimelineChart = ({
     // Recharts용 데이터 변환
     const chartData = history.map((item) => {
         const date = new Date(item.createdAt);
-        const timeLabel = `${String(date.getHours()).padStart(2, "0")}:${String(
-            date.getMinutes()
-        ).padStart(2, "0")}`;
+        const timeLabel = `${String(date.getHours()).padStart(
+            2,
+            "0"
+        )}:${String(date.getMinutes()).padStart(2, "0")}`;
         return {
             time: timeLabel,
             mental: item.mentalLevel,
@@ -53,13 +55,13 @@ const RiskTimelineChart = ({
     return (
         <div className="h-64 w-full">
             {/* 범례 텍스트 */}
-            <div className="mb-2 flex items-center gap-4 text-[11px] text-slate-600">
+            <div className="mb-2 flex items-center gap-4 text-[11px] text-slate-400">
                 <div className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-sky-400" />
                     <span>멘탈 위험도</span>
                 </div>
                 <div className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-full bg-orange-500" />
+                    <span className="inline-block h-2 w-2 rounded-full bg-orange-400" />
                     <span>신체 위험도</span>
                 </div>
             </div>
@@ -69,19 +71,19 @@ const RiskTimelineChart = ({
                     data={chartData}
                     margin={{ top: 10, right: 16, left: 0, bottom: 8 }}
                 >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                     <XAxis
                         dataKey="time"
-                        tick={{ fontSize: 10, fill: "#6b7280" }}
-                        axisLine={{ stroke: "#e5e7eb" }}
-                        tickLine={{ stroke: "#e5e7eb" }}
+                        tick={{ fontSize: 10, fill: "#9ca3af" }}
+                        axisLine={{ stroke: "#1f2937" }}
+                        tickLine={{ stroke: "#1f2937" }}
                     />
                     <YAxis
                         domain={[0, 3]}
                         ticks={[0, 1, 2, 3]}
-                        tick={{ fontSize: 10, fill: "#6b7280" }}
-                        axisLine={{ stroke: "#e5e7eb" }}
-                        tickLine={{ stroke: "#e5e7eb" }}
+                        tick={{ fontSize: 10, fill: "#9ca3af" }}
+                        axisLine={{ stroke: "#1f2937" }}
+                        tickLine={{ stroke: "#1f2937" }}
                     />
                     <Tooltip
                         formatter={(value: any, name: string) => {
@@ -92,21 +94,21 @@ const RiskTimelineChart = ({
                         contentStyle={{
                             fontSize: 11,
                             borderRadius: 8,
-                            borderColor: "#e5e7eb",
+                            borderColor: "#374151",
+                            backgroundColor: "#020617",
+                            color: "#e5e7eb",
                         }}
                     />
                     <Legend
                         verticalAlign="top"
                         align="right"
-                        wrapperStyle={{ fontSize: 11, paddingBottom: 12 }}
-                        formatter={(value: string) =>
-                            value === "mental" ? "멘탈" : "신체"
-                        }
+                        wrapperStyle={{ fontSize: 11, paddingBottom: 12, color: "#e5e7eb" }}
+                        formatter={(value: string) => (value === "mental" ? "멘탈" : "신체")}
                     />
                     <Line
                         type="monotone"
                         dataKey="mental"
-                        stroke="#3b82f6"
+                        stroke="#38bdf8"
                         strokeWidth={2}
                         dot={{ r: 3 }}
                         activeDot={{ r: 4 }}
@@ -114,7 +116,7 @@ const RiskTimelineChart = ({
                     <Line
                         type="monotone"
                         dataKey="physical"
-                        stroke="#f97316"
+                        stroke="#fb923c"
                         strokeWidth={2}
                         dot={{ r: 3 }}
                         activeDot={{ r: 4 }}
@@ -129,6 +131,7 @@ export const UserDetailPage = () => {
     const { userId } = useParams<{ userId: string }>();
     const [details, setDetails] = useState<UserDetailsResponse | null>(null);
     const [utterances, setUtterances] = useState<UserUtterance[]>([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!userId) return;
@@ -144,36 +147,76 @@ export const UserDetailPage = () => {
     if (!details) {
         return (
             <AppLayout>
-                <div className="text-sm text-slate-500">로딩 중...</div>
+                <div className="text-sm text-slate-400">로딩 중...</div>
             </AppLayout>
         );
     }
 
+    const highestLevel = details.riskHistory?.length
+        ? Math.max(
+            ...details.riskHistory.map((h) =>
+                Math.max(h.mentalLevel, h.physicalLevel)
+            )
+        )
+        : 0;
+
     return (
         <AppLayout>
-            {/* 상단 사용자 정보 */}
-            <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-                <div className="text-lg font-semibold text-slate-900">
-                    {details.name}
+            {/* 상단 헤더 + 요약 */}
+            <section className="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-800/60 bg-slate-900/80 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.9)]">
+                <div className="flex items-center justify-between gap-4">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-800"
+                    >
+                        <ArrowLeft size={14} />
+                        목록으로 돌아가기
+                    </button>
+
+                    <div className="text-[11px] text-slate-400">
+                        사용자 ID : {details.userId}
+                    </div>
                 </div>
-                <div className="mt-1 text-sm text-slate-600">
-                    나이 {details.age}세 · {details.region} · {details.phone}
+
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <div className="text-lg font-semibold text-slate-50">
+                            {details.name}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-300">
+                            나이 {details.age}세 · {details.region} · {details.phone}
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2 text-right">
+                        <div className="text-xs text-slate-400">
+                            누적 최고 위험도 등급
+                        </div>
+                        <LevelBadge level={highestLevel} />
+                    </div>
                 </div>
             </section>
 
             {/* 최근 24시간 위험도 타임라인 */}
-            <section className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-                <h2 className="mb-3 text-sm font-semibold text-slate-900">
+            <section className="mb-6 rounded-3xl border border-slate-800/60 bg-slate-900/80 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.9)]">
+                <h2 className="mb-2 text-sm font-semibold text-slate-50">
                     최근 24시간 위험도 타임라인
                 </h2>
+                <p className="mb-4 text-xs text-slate-400">
+                    발화 시점별로 멘탈·신체 위험도의 변화를 한눈에 볼 수 있습니다. 최고
+                    등급(3)에 가까울수록 진한 색으로 표시됩니다.
+                </p>
                 <RiskTimelineChart history={details.riskHistory} />
             </section>
 
             {/* 최근 발화 내역 (24시간 기준) */}
-            <section className="rounded-2xl bg-white p-6 shadow-sm">
-                <h2 className="mb-3 text-sm font-semibold text-slate-900">
+            <section className="rounded-3xl border border-slate-800/60 bg-slate-900/80 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.9)]">
+                <h2 className="mb-2 text-sm font-semibold text-slate-50">
                     최근 발화 내역 (24시간 기준)
                 </h2>
+                <p className="mb-4 text-xs text-slate-400">
+                    관리자에게 알림을 보냈던 발화와 그 근거 문장을 확인할 수 있습니다.
+                </p>
                 <div className="space-y-3">
                     {last24hUtterances.map((utt) => {
                         const level = Math.max(
@@ -183,22 +226,22 @@ export const UserDetailPage = () => {
                         return (
                             <div
                                 key={utt.utteranceId}
-                                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                                className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 transition hover:bg-slate-900/90"
                             >
-                                <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+                                <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
                                     <span>{formatDate(utt.timestamp)}</span>
                                     <LevelBadge level={level} />
                                 </div>
-                                <div className="mb-2 text-sm text-slate-900">{utt.text}</div>
-                                <div className="text-xs text-slate-600">
-                                    근거: {utt.reasonText}
+                                <div className="mb-2 text-sm text-slate-100">{utt.text}</div>
+                                <div className="text-xs text-slate-300">
+                                    근거 문장: {utt.reasonText}
                                 </div>
                             </div>
                         );
                     })}
 
                     {last24hUtterances.length === 0 && (
-                        <div className="text-sm text-slate-500">
+                        <div className="text-sm text-slate-400">
                             최근 24시간 발화가 없습니다.
                         </div>
                     )}
