@@ -4,7 +4,7 @@ import axios from "axios";
 const API_BASE_URL = (
     import.meta.env.VITE_API_BASE ??
     import.meta.env.VITE_API_BASE_URL ??
-    "https://54.116.27.183"
+    "https://api.carerobot.shop"
 ).replace(/\/$/, "");
 
 export const api = axios.create({

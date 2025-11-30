@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { fetchRiskAlarms, formatDate, type RiskAlarm } from "@/api/client";
 import { LevelBadge } from "./LevelBadge";
-import { useNavigate } from "react-router-dom";
 
 interface Props {
     onClose: () => void;
@@ -10,14 +9,14 @@ interface Props {
 
 const NotificationPanel = ({ onClose }: Props) => {
     const [alarms, setAlarms] = useState<RiskAlarm[]>([]);
-    const navigate = useNavigate();
 
     useEffect(() => {
         fetchRiskAlarms()
             .then((data) => {
                 const sorted = [...data].sort(
                     (a, b) =>
-                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                        new Date(b.createdAt).getTime() -
+                        new Date(a.createdAt).getTime()
                 );
                 setAlarms(sorted);
             })
@@ -37,6 +36,7 @@ const NotificationPanel = ({ onClose }: Props) => {
                     닫기
                 </button>
             </div>
+
             <div className="max-h-96 overflow-y-auto p-2">
                 {alarms.length === 0 && (
                     <div className="px-3 py-4 text-xs text-slate-400">
@@ -47,18 +47,14 @@ const NotificationPanel = ({ onClose }: Props) => {
                 {alarms.map((alarm) => {
                     const level = Math.max(alarm.mentalLevel, alarm.physicalLevel);
                     return (
-                        <button
+                        <div
                             key={alarm.alarmId}
-                            className="flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-left transition hover:bg-slate-800/80"
-                            onClick={() => {
-                                navigate(`/risk-alarms/${alarm.alarmId}`);
-                                onClose();
-                            }}
+                            className="flex w-full flex-col gap-1 rounded-xl px-3 py-2 text-left transition hover:bg-slate-800/80 cursor-default"
                         >
                             <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-slate-50">
-                  {alarm.userName}
-                </span>
+                                <span className="text-sm font-medium text-slate-50">
+                                    {alarm.userName}
+                                </span>
                                 <LevelBadge level={level} />
                             </div>
                             <div className="text-[11px] text-slate-400">
@@ -67,17 +63,17 @@ const NotificationPanel = ({ onClose }: Props) => {
                             <div className="line-clamp-2 text-xs text-slate-200">
                                 {alarm.reasonText}
                             </div>
-                        </button>
+                        </div>
                     );
                 })}
             </div>
 
             <style>{`
-        @keyframes panelFade {
-          0% { opacity: 0; transform: translateY(-6px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+                @keyframes panelFade {
+                    0% { opacity: 0; transform: translateY(-6px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
         </div>
     );
 };

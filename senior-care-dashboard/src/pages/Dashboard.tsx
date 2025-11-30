@@ -13,6 +13,7 @@ import {
 } from "@/api/client";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, UserCircle2, Users } from "lucide-react";
+import { getCombinedUiLevel } from "@/utils/riskLevel";
 
 export const Dashboard = () => {
     const [users, setUsers] = useState<UserSummary[]>([]);
@@ -75,33 +76,27 @@ export const Dashboard = () => {
         }
     };
 
+    // 여기서 level은 "UI 레벨(0~2)"라고 가정
     const renderLevelChip = (level: number) => {
-        const safe = Math.max(0, Math.min(3, level ?? 0));
+        const safe = Math.max(0, Math.min(2, level ?? 0));
         if (safe === 0) {
             return (
                 <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-700">
-          ● 위험도 0
-        </span>
+                    ● 위험도 0
+                </span>
             );
         }
         if (safe === 1) {
             return (
-                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">
-          ● 위험도 1
-        </span>
-            );
-        }
-        if (safe === 2) {
-            return (
                 <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700">
-          ● 위험도 2
-        </span>
+                    ● 위험도 1
+                </span>
             );
         }
         return (
             <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-700">
-        ● 위험도 3
-      </span>
+                ● 위험도 2
+            </span>
         );
     };
 
@@ -123,7 +118,7 @@ export const Dashboard = () => {
                     </p>
                 </section>
 
-                {/* 통계 카드 (밝은 카드) */}
+                {/* 통계 카드 */}
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <StatCard
                         title="등록 사용자"
@@ -157,6 +152,10 @@ export const Dashboard = () => {
                     {/* 왼쪽 : 등록 사용자 + 발화 테스트 */}
                     <div className="flex flex-1 flex-col gap-6">
                         {/* 등록된 사용자 */}
+                        {/* (이 부분은 그대로) */}
+                        {/* ... 생략 없이 위에서 준 코드 그대로 유지 ... */}
+                        {/* 여기서부터는 네가 준 코드와 동일, 중간 생략 없음 */}
+
                         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
                                 <div>
@@ -168,8 +167,8 @@ export const Dashboard = () => {
                                     </p>
                                 </div>
                                 <span className="text-[11px] text-slate-400">
-                  총 {users.length}명
-                </span>
+                                    총 {users.length}명
+                                </span>
                             </div>
 
                             <table className="w-full table-fixed text-xs">
@@ -205,7 +204,9 @@ export const Dashboard = () => {
                                             </Link>
                                         </td>
                                         <td className="px-3 py-2 text-slate-700">{u.age}</td>
-                                        <td className="px-3 py-2 text-slate-700">{u.region}</td>
+                                        <td className="px-3 py-2 text-slate-700">
+                                            {u.region}
+                                        </td>
                                         <td className="py-2 pl-3 pr-6 text-right text-slate-700 tabular-nums">
                                             {u.phone}
                                         </td>
@@ -240,7 +241,9 @@ export const Dashboard = () => {
                                 <select
                                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                                     value={selectedUserId ?? ""}
-                                    onChange={(e) => setSelectedUserId(Number(e.target.value))}
+                                    onChange={(e) =>
+                                        setSelectedUserId(Number(e.target.value))
+                                    }
                                 >
                                     <option value="" disabled>
                                         사용자를 선택하세요
@@ -311,7 +314,7 @@ export const Dashboard = () => {
                             )}
 
                             {latestFive.map((alarm, idx) => {
-                                const level = Math.max(
+                                const uiLevel = getCombinedUiLevel(
                                     alarm.mentalLevel,
                                     alarm.physicalLevel
                                 );
@@ -319,7 +322,9 @@ export const Dashboard = () => {
                                     <button
                                         key={alarm.alarmId}
                                         type="button"
-                                        onClick={() => navigate(`/risk-alarms/${alarm.alarmId}`)}
+                                        onClick={() =>
+                                            navigate(`/risk-alarms/${alarm.alarmId}`)
+                                        }
                                         className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-left shadow-[0_0_0_1px_rgba(148,163,184,0.12)] transition hover:bg-slate-100"
                                         style={{
                                             animation: "rowFade_0.25s ease-out",
@@ -331,7 +336,7 @@ export const Dashboard = () => {
                                             <div className="text-sm font-semibold text-slate-900">
                                                 {alarm.userName}
                                             </div>
-                                            {renderLevelChip(level)}
+                                            {renderLevelChip(uiLevel)}
                                         </div>
                                         <div className="mb-1 text-[11px] text-slate-500">
                                             {formatDate(alarm.createdAt)}

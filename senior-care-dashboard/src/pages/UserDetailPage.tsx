@@ -11,6 +11,10 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { LevelBadge } from "@/components/LevelBadge";
 import { ArrowLeft } from "lucide-react";
+import {
+    mapRawToUiLevel,
+    getCombinedUiLevel,
+} from "@/utils/riskLevel";
 
 // Recharts
 import {
@@ -38,17 +42,18 @@ const RiskTimelineChart = ({
         );
     }
 
-    // Recharts용 데이터 변환
+    // Recharts용 데이터 변환 (백엔드 → UI 레벨)
     const chartData = history.map((item) => {
         const date = new Date(item.createdAt);
         const timeLabel = `${String(date.getHours()).padStart(
             2,
             "0"
         )}:${String(date.getMinutes()).padStart(2, "0")}`;
+
         return {
             time: timeLabel,
-            mental: item.mentalLevel,
-            physical: item.physicalLevel,
+            mental: mapRawToUiLevel(item.mentalLevel),
+            physical: mapRawToUiLevel(item.physicalLevel),
         };
     });
 
@@ -79,8 +84,8 @@ const RiskTimelineChart = ({
                         tickLine={{ stroke: "#1f2937" }}
                     />
                     <YAxis
-                        domain={[0, 3]}
-                        ticks={[0, 1, 2, 3]}
+                        domain={[0, 2]}
+                        ticks={[0, 1, 2]}
                         tick={{ fontSize: 10, fill: "#9ca3af" }}
                         axisLine={{ stroke: "#1f2937" }}
                         tickLine={{ stroke: "#1f2937" }}
@@ -152,13 +157,15 @@ export const UserDetailPage = () => {
         );
     }
 
-    const highestLevel = details.riskHistory?.length
+    // 누적 최고 "원본" 위험도 → UI 레벨로 변환
+    const highestRaw = details.riskHistory?.length
         ? Math.max(
             ...details.riskHistory.map((h) =>
                 Math.max(h.mentalLevel, h.physicalLevel)
             )
         )
         : 0;
+    const highestLevelUi = mapRawToUiLevel(highestRaw);
 
     return (
         <AppLayout>
@@ -192,7 +199,8 @@ export const UserDetailPage = () => {
                         <div className="text-xs text-slate-400">
                             누적 최고 위험도 등급
                         </div>
-                        <LevelBadge level={highestLevel} />
+                        {/* UI 레벨 기준으로 통일 */}
+                        <LevelBadge level={highestLevelUi} />
                     </div>
                 </div>
             </section>
@@ -203,8 +211,7 @@ export const UserDetailPage = () => {
                     최근 24시간 위험도 타임라인
                 </h2>
                 <p className="mb-4 text-xs text-slate-400">
-                    발화 시점별로 멘탈·신체 위험도의 변화를 한눈에 볼 수 있습니다. 최고
-                    등급(3)에 가까울수록 진한 색으로 표시됩니다.
+                    발화 시점별로 멘탈·신체 위험도의 변화를 한눈에 볼 수 있습니다.
                 </p>
                 <RiskTimelineChart history={details.riskHistory} />
             </section>
@@ -219,10 +226,12 @@ export const UserDetailPage = () => {
                 </p>
                 <div className="space-y-3">
                     {last24hUtterances.map((utt) => {
-                        const level = Math.max(
+                        const rawLevel = Math.max(
                             utt.riskLevelMental,
                             utt.riskLevelPhysical
                         );
+                        const uiLevel = mapRawToUiLevel(rawLevel);
+
                         return (
                             <div
                                 key={utt.utteranceId}
@@ -230,7 +239,7 @@ export const UserDetailPage = () => {
                             >
                                 <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
                                     <span>{formatDate(utt.timestamp)}</span>
-                                    <LevelBadge level={level} />
+                                    <LevelBadge level={uiLevel} />
                                 </div>
                                 <div className="mb-2 text-sm text-slate-100">{utt.text}</div>
                                 <div className="text-xs text-slate-300">

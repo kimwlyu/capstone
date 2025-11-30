@@ -1,44 +1,20 @@
-import { ReactNode, useEffect, useState } from "react";
+// src/components/AppLayout.tsx
+import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
-import { getWebSocketUrl, type RealtimeAlarm } from "@/api/client";
-import { LevelBadge } from "./LevelBadge";
+import { useRiskAlarmsWS } from "@/hooks/useRiskAlarmsWS";
+import { RiskPopup } from "./RiskPopup";
 
 interface Props {
     children: ReactNode;
 }
 
 export default function AppLayout({ children }: Props) {
-    const [popupAlarm, setPopupAlarm] = useState<RealtimeAlarm | null>(null);
-    const [isBlurred, setIsBlurred] = useState(false);
+    // STOMP WebSocket 훅
+    const { latestAlarm, clearLatestAlarm } = useRiskAlarmsWS();
 
-    useEffect(() => {
-        const wsUrl = getWebSocketUrl("/ws/risk-alarms");
-        const ws = new WebSocket(wsUrl);
-
-        ws.onmessage = (event) => {
-            try {
-                const alarm: RealtimeAlarm = JSON.parse(event.data);
-                const level = Math.max(alarm.mentalLevel, alarm.physicalLevel);
-                if (level === 3) {
-                    setPopupAlarm(alarm);
-                    setIsBlurred(true);
-                }
-            } catch (e) {
-                console.error("WebSocket message parsing error:", e);
-            }
-        };
-
-        ws.onerror = () => console.error("WebSocket connection error");
-        ws.onclose = () => console.log("WebSocket closed");
-
-        return () => ws.close();
-    }, []);
-
-    const closePopup = () => {
-        setPopupAlarm(null);
-        setIsBlurred(false);
-    };
+    // 팝업 떠 있을 때만 메인 영역 블러
+    const isBlurred = !!latestAlarm;
 
     return (
         <div className="min-h-screen flex bg-slate-100">
@@ -58,53 +34,8 @@ export default function AppLayout({ children }: Props) {
                     <div className="mx-auto max-w-7xl space-y-6">{children}</div>
                 </main>
 
-                {/* 최고 위험도 팝업 */}
-                {popupAlarm && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm">
-                        <div className="relative w-full max-w-lg rounded-3xl bg-white/95 p-6 shadow-2xl animate-popup-bounce">
-                            <div className="absolute -top-5 left-1/2 h-10 w-10 -translate-x-1/2 rounded-full bg-gradient-to-tr from-red-500 to-amber-400 text-white flex items-center justify-center text-xl font-bold alarm-pulse-ring">
-                                !
-                            </div>
-
-                            <h2 className="mb-4 mt-3 text-lg font-semibold text-red-600">
-                                최고 위험도 감지됨
-                            </h2>
-
-                            <div className="space-y-3 text-sm">
-                                <div className="font-bold text-slate-900">
-                                    {popupAlarm.userName}
-                                </div>
-
-                                <LevelBadge
-                                    level={Math.max(
-                                        popupAlarm.mentalLevel,
-                                        popupAlarm.physicalLevel
-                                    )}
-                                />
-
-                                <div className="rounded-xl bg-red-50 px-4 py-3 text-slate-800">
-                                    <div className="mb-1 text-xs font-semibold text-red-700">
-                                        근거 문장
-                                    </div>
-                                    <div className="text-sm leading-relaxed">
-                                        {popupAlarm.reasonText}
-                                    </div>
-                                </div>
-
-                                <div className="text-[11px] text-slate-500">
-                                    {new Date(popupAlarm.createdAt).toLocaleString()}
-                                </div>
-
-                                <button
-                                    onClick={closePopup}
-                                    className="mt-2 w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 hover:shadow-md"
-                                >
-                                    닫기
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {/* STOMP로 받은 최고 위험(UI 기준 2단계) 팝업 */}
+                <RiskPopup alarm={latestAlarm} onClose={clearLatestAlarm} />
             </div>
 
             {/* 페이지/팝업 애니메이션 정의 */}

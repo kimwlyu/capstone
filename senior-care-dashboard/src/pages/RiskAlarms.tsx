@@ -4,6 +4,7 @@ import AppLayout from "@/components/AppLayout";
 import { fetchRiskAlarms, formatDate, type RiskAlarm } from "@/api/client";
 import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
+import { getCombinedUiLevel } from "@/utils/riskLevel";
 
 export const RiskAlarms = () => {
     const [alarms, setAlarms] = useState<RiskAlarm[]>([]);
@@ -21,37 +22,32 @@ export const RiskAlarms = () => {
             .catch(console.error);
     }, []);
 
+    // level은 UI 기준 레벨(0~2)
     const renderLevelChip = (level: number) => {
-        const safe = Math.max(0, Math.min(3, level ?? 0));
+        const safe = Math.max(0, Math.min(2, level ?? 0));
         if (safe === 0)
             return (
                 <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-700">
-          ● 위험도 0
-        </span>
+                    ● 위험도 0
+                </span>
             );
         if (safe === 1)
             return (
-                <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
-          ● 위험도 1
-        </span>
-            );
-        if (safe === 2)
-            return (
                 <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-700">
-          ● 위험도 2
-        </span>
+                    ● 위험도 1
+                </span>
             );
         return (
             <span className="inline-flex rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-medium text-red-700">
-        ● 위험도 3
-      </span>
+                ● 위험도 2
+            </span>
         );
     };
 
     return (
         <AppLayout>
             <div className="space-y-6">
-                {/* 상단 영역 - 완전 흰 배경 + 진한 텍스트 */}
+                {/* 상단 영역 */}
                 <section className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200">
                     <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-red-300 bg-red-50 px-3 py-1 text-[11px] font-semibold text-red-600">
                         <Bell className="h-4 w-4" />
@@ -68,7 +64,10 @@ export const RiskAlarms = () => {
                 {/* 알림 리스트 */}
                 <section className="space-y-4">
                     {alarms.map((alarm, idx) => {
-                        const level = Math.max(alarm.mentalLevel, alarm.physicalLevel);
+                        const uiLevel = getCombinedUiLevel(
+                            alarm.mentalLevel,
+                            alarm.physicalLevel
+                        );
                         return (
                             <button
                                 key={alarm.alarmId}
@@ -84,7 +83,7 @@ export const RiskAlarms = () => {
                                     <div className="text-sm font-semibold text-slate-900">
                                         {alarm.userName}
                                     </div>
-                                    {renderLevelChip(level)}
+                                    {renderLevelChip(uiLevel)}
                                 </div>
 
                                 <div className="mb-1 text-xs text-slate-500">

@@ -1,7 +1,7 @@
 // src/components/RiskPopup.tsx
 import type { RealtimeAlarm } from "@/api/client";
 import { LevelBadge } from "./LevelBadge";
-import { useNavigate } from "react-router-dom";
+import { getCombinedUiLevel, isHighRiskUi } from "@/utils/riskLevel";
 
 interface Props {
     alarm: RealtimeAlarm | null;
@@ -9,22 +9,22 @@ interface Props {
 }
 
 export const RiskPopup = ({ alarm, onClose }: Props) => {
-    const navigate = useNavigate();
-
     if (!alarm) return null;
 
-    const combinedLevel = Math.max(alarm.mentalLevel, alarm.physicalLevel);
+    // 백엔드 정신/신체 레벨 → UI 레벨(0~2)
+    const uiLevel = getCombinedUiLevel(alarm.mentalLevel, alarm.physicalLevel);
 
-    const goDetail = () => {
-        // 알림 상세 페이지로 이동 (기존 로직 그대로 유지)
-        navigate(`/alarms/${alarm.alarmId}`);
-        onClose();
-    };
+    // UI 기준 2단계가 아니면 팝업/블러 없음
+    if (!isHighRiskUi(uiLevel)) {
+        return null;
+    }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+            {/* 블러 배경 */}
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
 
+            {/* 팝업 카드 */}
             <div className="relative w-[360px] max-w-[90%] rounded-3xl border border-red-200 bg-gradient-to-br from-red-600 via-rose-600 to-orange-500 p-[1px] shadow-[0_24px_80px_rgba(248,113,113,0.8)] animate-[riskPop_0.26s_ease-out]">
                 <div className="rounded-[20px] bg-slate-950/90 px-5 py-4 text-white">
                     <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-red-200/90">
@@ -39,7 +39,7 @@ export const RiskPopup = ({ alarm, onClose }: Props) => {
                             </div>
                         </div>
                         <div className="ml-auto">
-                            <LevelBadge level={combinedLevel} />
+                            <LevelBadge level={uiLevel} />
                         </div>
                     </div>
 
@@ -50,20 +50,14 @@ export const RiskPopup = ({ alarm, onClose }: Props) => {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 text-xs">
+                    {/* 버튼 영역: 닫기만 남김 */}
+                    <div className="flex justify-end text-xs">
                         <button
                             type="button"
                             onClick={onClose}
                             className="rounded-full bg-white/5 px-3 py-2 text-slate-100 hover:bg-white/10"
                         >
                             닫기
-                        </button>
-                        <button
-                            type="button"
-                            onClick={goDetail}
-                            className="rounded-full bg-white px-3 py-2 font-semibold text-red-700 hover:bg-slate-100"
-                        >
-                            알림 상세 보기
                         </button>
                     </div>
                 </div>
