@@ -30,7 +30,6 @@ export default function AppLayout({ children }: Props) {
                         isBlurred ? "pointer-events-none blur-sm" : ""
                     }`}
                 >
-                    {/* 메인 컨텐츠 래퍼 */}
                     <div className="mx-auto max-w-7xl space-y-6">{children}</div>
                 </main>
 
@@ -38,7 +37,6 @@ export default function AppLayout({ children }: Props) {
                 <RiskPopup alarm={latestAlarm} onClose={clearLatestAlarm} />
             </div>
 
-            {/* 페이지/팝업 애니메이션 정의 */}
             <style>{`
         .animate-page-enter {
           animation: pageEnter 0.35s ease-out;

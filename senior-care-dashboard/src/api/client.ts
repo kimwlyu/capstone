@@ -143,7 +143,6 @@ export function formatDate(value?: string | null): string {
 
 // WebSocket URL 생성
 export function getWebSocketUrl(path: string): string {
-    // 아예 끄는 옵션
     if (WS_DISABLED) return "";
 
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;

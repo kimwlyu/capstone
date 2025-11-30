@@ -18,7 +18,7 @@ export const LoginPage = () => {
 
         try {
             const data = await adminLogin(email, password);
-            // ★ 토큰 저장 필수
+            // ★ 토큰 저장
             localStorage.setItem("adminToken", data.token);
             navigate("/", { replace: true });
         } catch (err) {
