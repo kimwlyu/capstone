@@ -43,19 +43,26 @@ const RiskTimelineChart = ({
     }
 
     // Recharts용 데이터 변환 (백엔드 → UI 레벨)
-    const chartData = history.map((item) => {
-        const date = new Date(item.createdAt);
-        const timeLabel = `${String(date.getHours()).padStart(
-            2,
-            "0"
-        )}:${String(date.getMinutes()).padStart(2, "0")}`;
+    // 👉 createdAt 기준으로 정렬해서 왼쪽=과거, 오른쪽=최근
+    const chartData = [...history]
+        .sort(
+            (a, b) =>
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+        )
+        .map((item) => {
+            const date = new Date(item.createdAt);
+            const timeLabel = `${String(date.getHours()).padStart(
+                2,
+                "0"
+            )}:${String(date.getMinutes()).padStart(2, "0")}`;
 
-        return {
-            time: timeLabel,
-            mental: mapRawToUiLevel(item.mentalLevel),
-            physical: mapRawToUiLevel(item.physicalLevel),
-        };
-    });
+            return {
+                time: timeLabel,
+                mental: mapRawToUiLevel(item.mentalLevel),
+                physical: mapRawToUiLevel(item.physicalLevel),
+            };
+        });
 
     return (
         <div className="h-64 w-full">
@@ -92,7 +99,8 @@ const RiskTimelineChart = ({
                     />
                     <Tooltip
                         formatter={(value: any, name: string) => {
-                            const label = name === "mental" ? "멘탈 위험도" : "신체 위험도";
+                            const label =
+                                name === "mental" ? "멘탈 위험도" : "신체 위험도";
                             return [value, label];
                         }}
                         labelFormatter={(label) => `시간: ${label}`}
@@ -107,8 +115,14 @@ const RiskTimelineChart = ({
                     <Legend
                         verticalAlign="top"
                         align="right"
-                        wrapperStyle={{ fontSize: 11, paddingBottom: 12, color: "#e5e7eb" }}
-                        formatter={(value: string) => (value === "mental" ? "멘탈" : "신체")}
+                        wrapperStyle={{
+                            fontSize: 11,
+                            paddingBottom: 12,
+                            color: "#e5e7eb",
+                        }}
+                        formatter={(value: string) =>
+                            value === "mental" ? "멘탈" : "신체"
+                        }
                     />
                     <Line
                         type="monotone"
@@ -191,7 +205,8 @@ export const UserDetailPage = () => {
                             {details.name}
                         </div>
                         <div className="mt-1 text-sm text-slate-300">
-                            나이 {details.age}세 · {details.region} · {details.phone}
+                            나이 {details.age}세 · {details.region} ·{" "}
+                            {details.phone}
                         </div>
                     </div>
 
@@ -211,7 +226,8 @@ export const UserDetailPage = () => {
                     최근 24시간 위험도 타임라인
                 </h2>
                 <p className="mb-4 text-xs text-slate-400">
-                    발화 시점별로 멘탈·신체 위험도의 변화를 한눈에 볼 수 있습니다.
+                    발화 시점별로 멘탈·신체 위험도의 변화를 한눈에 볼 수
+                    있습니다.
                 </p>
                 <RiskTimelineChart history={details.riskHistory} />
             </section>
@@ -222,7 +238,8 @@ export const UserDetailPage = () => {
                     최근 발화 내역 (24시간 기준)
                 </h2>
                 <p className="mb-4 text-xs text-slate-400">
-                    관리자에게 알림을 보냈던 발화와 그 근거 문장을 확인할 수 있습니다.
+                    관리자에게 알림을 보냈던 발화와 그 근거 문장을 확인할 수
+                    있습니다.
                 </p>
                 <div className="space-y-3">
                     {last24hUtterances.map((utt) => {
@@ -241,7 +258,9 @@ export const UserDetailPage = () => {
                                     <span>{formatDate(utt.timestamp)}</span>
                                     <LevelBadge level={uiLevel} />
                                 </div>
-                                <div className="mb-2 text-sm text-slate-100">{utt.text}</div>
+                                <div className="mb-2 text-sm text-slate-100">
+                                    {utt.text}
+                                </div>
                                 <div className="text-xs text-slate-300">
                                     근거 문장: {utt.reasonText}
                                 </div>
