@@ -128,17 +128,19 @@ function formatTimestampNoMs(): string {
     return iso.split(".")[0] + "Z";
 }
 
+// 🔧 시간 표시: 백엔드가 준 시간을 그대로(UTC 기준) 보여주도록 수정
 export function formatDate(value?: string | null): string {
     if (!value) return "-";
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return "-";
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-        2,
-        "0"
-    )}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(
-        2,
-        "0"
-    )}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    const hour = String(d.getUTCHours()).padStart(2, "0");
+    const minute = String(d.getUTCMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
 // WebSocket URL 생성
