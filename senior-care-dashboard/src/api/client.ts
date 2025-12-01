@@ -51,7 +51,7 @@ export interface UserSummary {
 export interface UserUtterance {
     utteranceId: number;
     text: string;
-    timestamp: string; // ISO string
+    timestamp: string; // ISO string (백엔드 값 그대로)
     riskLevelMental: number;
     riskLevelPhysical: number;
     reasonText: string;
@@ -128,19 +128,21 @@ function formatTimestampNoMs(): string {
     return iso.split(".")[0] + "Z";
 }
 
-// 🔧 시간 표시: 백엔드가 준 시간을 그대로(UTC 기준) 보여주도록 수정
+// 🔧 시간 표시: **타임존 변환 안 하고** 백엔드 ISO 문자열 그대로 잘라서 사용
+// 예: "2025-12-01T21:55:02.123Z" → "2025-12-01 21:55"
 export function formatDate(value?: string | null): string {
     if (!value) return "-";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return "-";
 
-    const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(d.getUTCDate()).padStart(2, "0");
-    const hour = String(d.getUTCHours()).padStart(2, "0");
-    const minute = String(d.getUTCMinutes()).padStart(2, "0");
+    const iso = String(value);
 
-    return `${year}-${month}-${day} ${hour}:${minute}`;
+    // 밀리초와 Z 제거
+    const noMs = iso.split(".")[0].replace("Z", ""); // "2025-12-01T21:55:02"
+
+    const [datePart, timePart] = noMs.split("T");
+    if (!datePart || !timePart) return iso;
+
+    const hhmm = timePart.slice(0, 5); // HH:MM
+    return `${datePart} ${hhmm}`;
 }
 
 // WebSocket URL 생성

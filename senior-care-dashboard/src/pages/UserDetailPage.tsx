@@ -11,10 +11,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { LevelBadge } from "@/components/LevelBadge";
 import { ArrowLeft } from "lucide-react";
-import {
-    mapRawToUiLevel,
-    getCombinedUiLevel,
-} from "@/utils/riskLevel";
+import { mapRawToUiLevel } from "@/utils/riskLevel";
 
 // Recharts
 import {
@@ -28,39 +25,34 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
-// 위험도 타임라인 (멘탈/신체 색 구분, 고급 그래프)
-const RiskTimelineChart = ({
-                               history,
-                           }: {
-    history: UserDetailsResponse["riskHistory"];
-}) => {
-    if (!history || history.length === 0) {
+// ================== 최근 24시간 위험도 타임라인 (발화 기준) ==================
+const RiskTimelineChart = ({ utterances }: { utterances: UserUtterance[] }) => {
+    if (!utterances || utterances.length === 0) {
         return (
             <div className="flex h-52 items-center justify-center text-xs text-slate-400">
-                위험도 기록이 없습니다.
+                최근 24시간 내 위험도 기록이 없습니다.
             </div>
         );
     }
 
-    // Recharts용 데이터 변환 (백엔드 → UI 레벨)
-    // 👉 createdAt 기준으로 정렬해서 왼쪽=과거, 오른쪽=최근
-    const chartData = [...history]
+    // 🔥 발화 timestamp 기준으로 오름차순 정렬 → 최신이 오른쪽
+    const chartData = [...utterances]
         .sort(
             (a, b) =>
-                new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
+                new Date(a.timestamp).getTime() -
+                new Date(b.timestamp).getTime()
         )
-        .map((item) => {
-            const date = new Date(item.createdAt);
-            const timeLabel = `${String(date.getHours()).padStart(
-                2,
-                "0"
-            )}:${String(date.getMinutes()).padStart(2, "0")}`;
+        .map((utt) => {
+            // 리스트에서 쓰는 거랑 똑같이 formatDate 사용
+            const fullLabel = formatDate(utt.timestamp); // "YYYY-MM-DD HH:MM"
+            const timeLabel = fullLabel.includes(" ")
+                ? fullLabel.split(" ")[1] // HH:MM 부분만
+                : fullLabel;
 
             return {
                 time: timeLabel,
-                mental: mapRawToUiLevel(item.mentalLevel),
-                physical: mapRawToUiLevel(item.physicalLevel),
+                mental: mapRawToUiLevel(utt.riskLevelMental),
+                physical: mapRawToUiLevel(utt.riskLevelPhysical),
             };
         });
 
@@ -146,6 +138,7 @@ const RiskTimelineChart = ({
     );
 };
 
+// ================== 사용자 상세 페이지 ==================
 export const UserDetailPage = () => {
     const { userId } = useParams<{ userId: string }>();
     const [details, setDetails] = useState<UserDetailsResponse | null>(null);
@@ -214,7 +207,6 @@ export const UserDetailPage = () => {
                         <div className="text-xs text-slate-400">
                             누적 최고 위험도 등급
                         </div>
-                        {/* UI 레벨 기준으로 통일 */}
                         <LevelBadge level={highestLevelUi} />
                     </div>
                 </div>
@@ -229,7 +221,8 @@ export const UserDetailPage = () => {
                     발화 시점별로 멘탈·신체 위험도의 변화를 한눈에 볼 수
                     있습니다.
                 </p>
-                <RiskTimelineChart history={details.riskHistory} />
+                {/* 그래프는 발화 리스트 기준 → 아래 리스트와 시간 완전 동일 */}
+                <RiskTimelineChart utterances={last24hUtterances} />
             </section>
 
             {/* 최근 발화 내역 (24시간 기준) */}
